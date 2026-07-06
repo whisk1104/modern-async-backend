@@ -8,8 +8,8 @@ A high-throughput, low-latency asynchronous backend system built with Python and
 
 *   **Non-Blocking I/O Core**: Driven by FastAPI and Uvicorn (`uvloop` integrated), bypassing traditional thread-pool limitations to achieve near-native concurrency.
 *   **Stateful Security Safeguards**: Implements stateless OAuth2 JWT authentication combined with a distributed Redis blacklist layer for real-time token revocation, operating under the principle of **eventual consistency**.
-*   **Defensive Data Layer**: Built on SQLAlchemy AsyncEngine utilizing request-scoped dependency injection (`ContextVars`) to eliminate connection leaks, with `pool_pre_ping=True` to guarantee **system determinism**.
-*   **Declarative Infrastructure**: Containerized via Docker multi-stage builds. Implements strict startup governance using container-native `healthcheck` constraints to eradicate application-level race conditions.
+*   **Defensive Data Layer**: Built on SQLAlchemy AsyncEngine utilizing request-scoped dependency injection to eliminate connection leaks, with `pool_pre_ping=True` to guarantee **system determinism**.
+*   **Declarative Infrastructure**: Containerized via optimized Docker multi-stage builds. Implements strict startup governance using container-native configuration constraints to eradicate application-level race conditions.
 
 ---
 
@@ -30,16 +30,9 @@ A high-throughput, low-latency asynchronous backend system built with Python and
 ## 📁 Project Structure
 
 ```text
-├── .github/               # CI/CD Workflows
-├── app/
-│   ├── core/              # System configuration, security, database setups
-│   ├── database/          # Models, schemas, and migrations
-│   ├── middleware/        # Rate-limiting, profiling, and exception handlers
-│   ├── services/          # Pure business logic layer
-│   └── views/             # API Routers / Endpoints
-├── docker/
-│   ├── Dockerfile         # Optimized multi-stage production build
-│   └── healthcheck.sh     # Native health probing scripts
-├── docker-compose.yml     # Declarative service orchestration container matrix
-├── requirements.txt       # Hardened dependency tracking
-└── README.md              # Documentation
+├── app/                  # Main application source code (core, database, services, views)
+├── .gitignore            # Git ignore file for security and cache filtering
+├── Dockerfile            # Production-ready multi-stage build image configuration
+├── docker-compose.yml    # Declarative service orchestration container matrix
+├── requirements.txt      # Hardened dependency tracking
+└── README.md             # Project documentation
