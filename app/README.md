@@ -1,38 +1,64 @@
-# Modern Asynchronous Backend Engine
+Markdown
+# Application Internals & Developer Guide
 
-A high-throughput, low-latency asynchronous backend system built with Python and FastAPI. This project is engineered with a **pragmatic, defensive approach**, striking a fine balance between performance scalability and infrastructure cost (ROI-driven design).
-
----
-
-## ⚡ Architectural Highlights
-
-*   **Non-Blocking I/O Core**: Driven by FastAPI and Uvicorn (`uvloop` integrated), bypassing traditional thread-pool limitations to achieve near-native concurrency.
-*   **Stateful Security Safeguards**: Implements stateless OAuth2 JWT authentication combined with a distributed Redis blacklist layer for real-time token revocation, operating under the principle of **eventual consistency**.
-*   **Defensive Data Layer**: Built on SQLAlchemy AsyncEngine utilizing request-scoped dependency injection to eliminate connection leaks, with `pool_pre_ping=True` to guarantee **system determinism**.
-*   **Declarative Infrastructure**: Containerized via optimized Docker multi-stage builds. Implements strict startup governance using container-native configuration constraints to eradicate application-level race conditions.
+This directory contains the core domain logic and API delivery layers of the application. Unlike the root documentation, this guide focuses on **bare-metal local development, code layering standards, and quality assurance**.
 
 ---
 
-## 🛠️ Tech Stack
+## 🏗️ Code Layering Architecture (Separation of Concerns)
 
-| Component | Technology | Role |
-| :--- | :--- | :--- |
-| **Framework** | FastAPI (Python) | High-performance ASGI web framework |
-| **ASGI Server** | Uvicorn + `uvloop` | Cython-based lightning-fast event loop |
-| **Data Validation** | Pydantic V2 | Rust-backed high-speed data serialization |
-| **Database ORM** | SQLAlchemy 2.0 (Async) | Object-Relational Mapping with async drivers |
-| **Database** | PostgreSQL | Primary relational storage |
-| **Cache & State** | Redis | Distributed token blacklist & atomic rate-limiting |
-| **Containerization**| Docker / Docker Compose | Multi-stage environment isolation & orchestration |
-
----
-
-## 📁 Project Structure
+To maintain a clean, maintainable, and unit-testable codebase, the application strictly adheres to the following decoupled layer boundaries:
 
 ```text
-├── app/                  # Main application source code (core, database, services, views)
-├── .gitignore            # Git ignore file for security and cache filtering
-├── Dockerfile            # Production-ready multi-stage build image configuration
-├── docker-compose.yml    # Declarative service orchestration container matrix
-├── requirements.txt      # Hardened dependency tracking
-└── README.md             # Project documentation
+  [ Client Request ] 
+          │
+          ▼
+  ┌───────────────────┐
+  │   Views / Routes  │ ───► Role: HTTP Protocol, Params Validation (Pydantic), Status Codes
+  └───────────────────┘
+          │
+          ▼
+  ┌───────────────────┐
+  │      Services     │ ───► Role: Pure Domain Logic, Database Transactions, Business Rules
+  └───────────────────┘
+          │
+          ▼
+  ┌───────────────────┐
+  │  Database/Models  │ ───► Role: SQLAlchemy Async Schemas, Data Persistence
+  └───────────────────┘
+views/ (The Delivery Layer): Strictly restricted to handling HTTP mechanics (request parsing, response status codes, route dependency injection). Zero business logic should live here.
+
+services/ (The Domain Layer): Orchestrates business rules and database state modifications. Services are designed to be completely decoupled from the web framework, making them easily unit-testable.
+
+core/ (The System Backbone): Low-level machinery including security hashing (Bcrypt), JWT generation primitives, and raw async database engine initializations.
+
+Bare-Metal Local Development
+For quick debugging cycles where spinning up full Docker containers is unnecessary, follow these steps to run the application bare-metal:
+
+1. Environment Isolation
+Create and activate a clean virtual environment:
+
+Bash
+python3 -m venv venv
+source venv/bin/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r ../requirements.txt
+2. Live-Reload Development Server
+Execute Uvicorn targeting the app instance with auto-reload enabled:
+
+Bash
+# Executed from the project root directory
+uvicorn app.main:app --reload --port 8000
+
+Testing & Code Quality Assurance
+We enforce strict linting and continuous quality controls to mitigate technical debt:
+
+Running Asynchronous Unit Tests
+Testing the async boundary requires specialized fixtures. We utilize pytest-asyncio to drive our non-blocking test suites:
+
+Bash
+pytest
+Code Formatting Style-Guide
+All code code must strictly comply with PEP 8 standards. Run black to automatically format files prior to any Git commit:
+
+Bash
+black . --check
